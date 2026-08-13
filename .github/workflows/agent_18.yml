@@ -1,0 +1,49 @@
+name: Agent — 18:00 UTC
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  agent:
+    name: Development Cycle (18:00 UTC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AGENT_GITHUB_TOKEN }}
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "${{ secrets.AGENT_GITHUB_USER_NAME }}"
+          git config user.email "${{ secrets.AGENT_GITHUB_USER_EMAIL }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install -r automation/requirements.txt
+
+      - name: Run development agent
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_USER_NAME: ${{ secrets.AGENT_GITHUB_USER_NAME }}
+          GITHUB_USER_EMAIL: ${{ secrets.AGENT_GITHUB_USER_EMAIL }}
+          REPO_PATH: ${{ github.workspace }}
+          TIMEZONE: UTC
+          COMMITS_PER_RUN_MIN: "10"
+          COMMITS_PER_RUN_MAX: "15"
+          MAX_CHANGED_LINES_PER_COMMIT: "50"
+        run: python automation/agent.py

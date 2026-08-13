@@ -1,0 +1,14 @@
+{
+  "execution_count": 0,
+  "current_phase": "Phase 1 — Foundation",
+  "current_task": null,
+  "completed_tasks": [],
+  "failed_tasks": [],
+  "total_commits": 0,
+  "last_execution": null,
+  "next_recommended_task": "Configure Gradle wrapper and verify the project skeleton compiles",
+  "technical_debt": [
+    "iOS app shell needs full ComposeUIViewController integration",
+    "core/* and feature/* build.gradle.kts files are stubs needing source sets"
+  ]
+}
