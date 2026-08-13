@@ -8,7 +8,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from config import AgentConfig
 
@@ -67,18 +68,24 @@ class GeminiClient:
     """Wraps the Gemini generative AI SDK for one-shot development cycle calls."""
 
     def __init__(self, config: AgentConfig) -> None:
-        genai.configure(api_key=config.gemini_api_key)
+        self.client = genai.Client(api_key=config.gemini_api_key)
         self.model_name = config.gemini_model
 
     def generate_cycle(self, context: str) -> str:
         """
         Send the full development-cycle context to Gemini and return the raw
-        JSON string response.  A fresh model instance is used every time so
+        JSON string response. A fresh request is used every time so
         there is no carry-over from previous cycles.
         """
-        model = genai.GenerativeModel(
-            model_name=self.model_name,
-            system_instruction=SYSTEM_PROMPT,
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=context,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                response_mime_type="application/json",
+            ),
         )
-        response = model.generate_content(context)
+        if not response.text:
+            raise ValueError("Empty response received from Gemini model")
         return response.text.strip()
+
