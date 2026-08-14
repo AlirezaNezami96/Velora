@@ -76,18 +76,13 @@ class GeminiClient:
         JSON string response. A fresh request is used every time so
         there is no carry-over from previous cycles.
         """
-        response = self.client.models.generate_content(
+        user_content = f"{SYSTEM_PROMPT}\n\n---\n\n{context}"
+        interaction = self.client.interactions.create(
             model=self.model_name,
-            contents=context,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json",
-                automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                    disable=True
-                ),
-            ),
+            input=user_content,
+            response_mime_type="application/json",
         )
-        if not response.text:
+        if not interaction.output_text:
             raise ValueError("Empty response received from Gemini model")
-        return response.text.strip()
+        return interaction.output_text.strip()
 
