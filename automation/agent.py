@@ -40,6 +40,17 @@ logging.basicConfig(
 logger = logging.getLogger("velora.agent")
 
 
+def _safe_push(git: GitManager) -> None:
+    """Commit any leftover uncommitted changes and push; log but do not raise."""
+    try:
+        if git.has_uncommitted_changes():
+            git.stage_all()
+            git.commit("chore: persist agent state")
+        git.push()
+    except Exception as exc:
+        logger.error("Push failed: %s", exc)
+
+
 def run_cycle() -> None:
     logger.info("=" * 60)
     logger.info("Velora Autonomous Development Agent — starting cycle")
@@ -72,13 +83,19 @@ def run_cycle() -> None:
 
     # ---------------------------------------------------------------- generate
     context = planner.build_context()
-    logger.info("Sending context to Gemini (%d chars)...", len(context))
+    logger.info(
+        "Sending context to Gemini (%d chars) via model '%s'...",
+        len(context),
+        config.gemini_model,
+    )
 
     try:
         raw_response = gemini.generate_cycle(context)
     except Exception as exc:
         logger.error("Gemini request failed: %s", exc)
         state.record_execution_end(0, next_task, [str(exc)], [])
+        # Always push so state changes reach the remote
+        _safe_push(git)
         sys.exit(1)
 
     # ---------------------------------------------------------------- execute
@@ -113,11 +130,7 @@ def run_cycle() -> None:
 
     # ---------------------------------------------------------------- push
     logger.info("Pushing %d commits to GitHub...", result["commits_made"])
-    try:
-        git.push()
-    except Exception as exc:
-        logger.error("Push failed: %s", exc)
-        sys.exit(1)
+    _safe_push(git)
 
     logger.info(
         "Cycle #%d complete. %d commits pushed.",

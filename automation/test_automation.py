@@ -15,7 +15,7 @@ class TestAgentConfig(unittest.TestCase):
     @patch.dict(os.environ, {"GEMINI_API_KEY": "test_key", "GITHUB_TOKEN": "test_token"}, clear=True)
     def test_default_model(self):
         config = AgentConfig.from_env()
-        self.assertEqual(config.gemini_model, "gemini-2.5-flash")
+        self.assertEqual(config.gemini_model, "gemini-3.5-flash")
         self.assertEqual(config.gemini_api_key, "test_key")
 
     @patch.dict(os.environ, {

@@ -6,7 +6,6 @@ Creates a fresh conversation for every development cycle.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from google import genai
 from google.genai import types
@@ -83,6 +82,9 @@ class GeminiClient:
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 response_mime_type="application/json",
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                    disable=True
+                ),
             ),
         )
         if not response.text:
