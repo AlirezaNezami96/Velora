@@ -6,6 +6,7 @@ Handles: status, history, staged changes, committing, diff validation, push.
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -106,9 +107,9 @@ class GitManager:
         return self.commit(message)
 
     def push(self, branch: Optional[str] = None) -> None:
-        branch = branch or self.current_branch()
-        self._run("push", "origin", branch)
-        logger.info("Pushed to origin/%s", branch)
+        target_branch = branch or self.current_branch() or os.getenv("GITHUB_REF_NAME") or "main"
+        self._run("push", "origin", f"HEAD:{target_branch}")
+        logger.info("Pushed to origin/%s", target_branch)
 
     def has_uncommitted_changes(self) -> bool:
         return bool(self._run("status", "--porcelain").stdout.strip())
