@@ -15,17 +15,17 @@ class TestAgentConfig(unittest.TestCase):
     @patch.dict(os.environ, {"GEMINI_API_KEY": "test_key", "GITHUB_TOKEN": "test_token"}, clear=True)
     def test_default_model(self):
         config = AgentConfig.from_env()
-        self.assertEqual(config.gemini_model, "gemini-3.6-flash")
+        self.assertEqual(config.gemini_model, "gemini-2.5-flash")
         self.assertEqual(config.gemini_api_key, "test_key")
 
     @patch.dict(os.environ, {
         "GEMINI_API_KEY": "test_key",
         "GITHUB_TOKEN": "test_token",
-        "GEMINI_MODEL": "gemini-3.6-flash"
+        "GEMINI_MODEL": "gemini-2.5-flash"
     }, clear=True)
     def test_custom_model(self):
         config = AgentConfig.from_env()
-        self.assertEqual(config.gemini_model, "gemini-3.6-flash")
+        self.assertEqual(config.gemini_model, "gemini-2.5-flash")
 
 
 class TestGeminiClient(unittest.TestCase):
@@ -33,25 +33,25 @@ class TestGeminiClient(unittest.TestCase):
     def test_generate_cycle(self, mock_client_cls):
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
-        mock_interaction = MagicMock()
-        mock_interaction.output_text = '{"summary": "test", "commits": []}'
-        mock_client.interactions.create.return_value = mock_interaction
+        mock_response = MagicMock()
+        mock_response.text = '{"summary": "test", "commits": []}'
+        mock_client.models.generate_content.return_value = mock_response
 
         config = AgentConfig(
             gemini_api_key="fake-key",
             github_token="fake-token",
-            gemini_model="gemini-3.6-flash",
+            gemini_model="gemini-2.5-flash",
         )
         client = GeminiClient(config)
         result = client.generate_cycle("context prompt")
 
         self.assertEqual(result, '{"summary": "test", "commits": []}')
         mock_client_cls.assert_called_once_with(api_key="fake-key")
-        mock_client.interactions.create.assert_called_once()
-        _, kwargs = mock_client.interactions.create.call_args
-        self.assertEqual(kwargs["model"], "gemini-3.6-flash")
-        self.assertIn("context prompt", kwargs["input"])
-        self.assertEqual(kwargs["response_mime_type"], "application/json")
+        mock_client.models.generate_content.assert_called_once()
+        _, kwargs = mock_client.models.generate_content.call_args
+        self.assertEqual(kwargs["model"], "gemini-2.5-flash")
+        self.assertIn("context prompt", kwargs["contents"])
+        self.assertEqual(kwargs["config"].response_mime_type, "application/json")
 
 
 class TestExtractJson(unittest.TestCase):

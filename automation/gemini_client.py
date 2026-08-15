@@ -77,12 +77,15 @@ class GeminiClient:
         there is no carry-over from previous cycles.
         """
         user_content = f"{SYSTEM_PROMPT}\n\n---\n\n{context}"
-        interaction = self.client.interactions.create(
+        response = self.client.models.generate_content(
             model=self.model_name,
-            input=user_content,
-            response_mime_type="application/json",
+            contents=user_content,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+            ),
         )
-        if not interaction.output_text:
+        if not response.text:
             raise ValueError("Empty response received from Gemini model")
-        return interaction.output_text.strip()
+        return response.text.strip()
 

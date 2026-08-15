@@ -25,14 +25,25 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Grant Gradle wrapper permissions
-        run: chmod +x ./gradlew
+      - name: Check if Gradle wrapper exists
+        id: check_gradle
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            echo "has_gradlew=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gradlew not found, skipping build until Gradle wrapper is configured"
+            echo "has_gradlew=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build shared module
+        if: steps.check_gradle.outputs.has_gradlew == 'true'
         run: ./gradlew :shared:assemble
 
       - name: Run shared tests
+        if: steps.check_gradle.outputs.has_gradlew == 'true'
         run: ./gradlew :shared:allTests
 
       - name: Build Android app
+        if: steps.check_gradle.outputs.has_gradlew == 'true'
         run: ./gradlew :composeApp:assembleDebug

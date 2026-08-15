@@ -21,6 +21,8 @@ class GitManager:
         self.repo = Path(config.repo_path).resolve()
         self.user_name = config.github_user_name
         self.user_email = config.github_user_email
+        self.github_token = config.github_token
+        self.github_repository = config.github_repository
         self.max_lines = config.max_changed_lines_per_commit
 
     # ------------------------------------------------------------------ helpers
@@ -44,6 +46,9 @@ class GitManager:
     def configure_identity(self) -> None:
         self._run("config", "user.name", self.user_name)
         self._run("config", "user.email", self.user_email)
+        if self.github_token and self.github_repository:
+            remote_url = f"https://x-access-token:{self.github_token}@github.com/{self.github_repository}.git"
+            self._run("remote", "set-url", "origin", remote_url)
 
     def status(self) -> str:
         return self._run("status", "--short").stdout
